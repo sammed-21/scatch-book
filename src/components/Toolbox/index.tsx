@@ -27,7 +27,7 @@ const Toolbox = () => {
   const showBurshToolOption =
     activeMenuItem === MENU_ITEMS.PENCIL ||
     activeMenuItem === MENU_ITEMS.ERASER;
-  const { color } = useSelector(
+  const { color, size } = useSelector(
     (state: RootState) => state.toolbox[activeMenuItem]
   );
   return (
@@ -97,6 +97,7 @@ const Toolbox = () => {
               type="range"
               min={1}
               max={10}
+              value={size}
               step={1}
               onChange={updateBrushSize}
             />
