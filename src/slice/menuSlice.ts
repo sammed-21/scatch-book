@@ -2,7 +2,7 @@ import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 
 import { MENU_ITEMS } from "@/constants";
 import { RootState } from "@/store";
-interface MenuState {
+export interface MenuState {
     activeMenuItem: string,
     actionMenuItem:string | null
 }
