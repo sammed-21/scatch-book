@@ -9,6 +9,8 @@ const Board = () => {
 
   const canvaseRef = useRef<HTMLCanvasElement | null>(null);
   const shouldDraw = useRef<HTMLCanvasElement | boolean>(false);
+  const drawHistory = useRef<ImageData[]>([]);
+  const historyPointer = useRef<number>(0);
   const { activeMenuItem, actionMenuItem } = useSelector(
     (state: RootState) => state.menu
   );
@@ -28,6 +30,23 @@ const Board = () => {
       anchor.download = "sketch.png";
       anchor.click();
       console.log(URL);
+    } else if (
+      actionMenuItem === MENU_ITEMS.UNDO ||
+      actionMenuItem === MENU_ITEMS.REDO
+    ) {
+      if (historyPointer.current > 0 && actionMenuItem === MENU_ITEMS.UNDO) {
+        historyPointer.current -= 1;
+      }
+      if (
+        historyPointer.current < drawHistory.current.length - 1 &&
+        actionMenuItem === MENU_ITEMS.REDO
+      ) {
+        historyPointer.current += 1;
+      }
+      const imageData = drawHistory.current[historyPointer.current];
+      if (context) {
+        context.putImageData(imageData, 0, 0);
+      }
     }
     dispatch(actionItemClick(null));
   }, [actionMenuItem]);
@@ -79,6 +98,16 @@ const Board = () => {
 
     const handleMouseUp = () => {
       shouldDraw.current = false;
+      if (context) {
+        const imageData = context.getImageData(
+          0,
+          0,
+          canvas.width,
+          canvas.height
+        );
+        drawHistory.current.push(imageData);
+        historyPointer.current = drawHistory.current.length - 1;
+      }
     };
 
     canvas.addEventListener("mousedown", handleMouseDown);
