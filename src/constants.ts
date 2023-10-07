@@ -5,7 +5,10 @@ const COLORS = {
     BLUE: 'blue',
     ORANGE: 'orange',
     YELLOW: 'yellow',
-    WHITE: 'white'
+    WHITE: 'white',
+    PURPLE: 'purple',
+    
+    
 }
 
 const MENU_ITEMS = {

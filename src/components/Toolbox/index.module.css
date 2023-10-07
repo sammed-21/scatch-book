@@ -10,7 +10,6 @@
             font-size: llpx;
             color: theme('colors.text1');
         }
-        
 .itemContainer{
     @apply flex justify-center mt-2;
     .colorBox{
