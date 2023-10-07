@@ -3,10 +3,13 @@ import React, { ChangeEvent } from "react";
 import styles from "./index.module.css";
 import { COLORS, MENU_ITEMS } from "@/constants";
 import { useSelector } from "react-redux";
+import { socket } from "@/socket";
+
 import { RootState } from "@/store";
 import cx from "classnames";
 import { useDispatch } from "react-redux";
 import { changeColor, changeBrushSize } from "@/slice/toolboxSlice";
+import e from "cors";
 const Toolbox = () => {
   const dispatch = useDispatch();
   function updateBrushSize(event: ChangeEvent<HTMLInputElement>): void {
@@ -16,9 +19,11 @@ const Toolbox = () => {
         size: Number(event.target.value),
       })
     );
+    socket.emit("changeConfig", { color, size: event.target.value });
   }
   function updateColor(newColor: string): void {
     dispatch(changeColor({ item: activeMenuItem, color: newColor }));
+    socket.emit("changeConfig", { color: newColor, size });
   }
   const activeMenuItem = useSelector(
     (state: RootState) => state.menu.activeMenuItem

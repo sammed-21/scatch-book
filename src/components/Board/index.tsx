@@ -1,9 +1,16 @@
 "use client";
 import { MENU_ITEMS } from "@/constants";
 import { actionItemClick } from "@/slice/menuSlice";
+import { socket } from "@/socket";
 import { RootState } from "@/store";
+import { stringify } from "querystring";
+
 import React, { useEffect, useLayoutEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
+interface chageConfigs {
+  color?: string;
+  size?: number;
+}
 const Board = () => {
   const dispatch = useDispatch();
 
@@ -21,7 +28,6 @@ const Board = () => {
     if (!canvaseRef.current) return;
     const canvas = canvaseRef.current;
     const context = canvas.getContext("2d");
-    console.log(actionMenuItem);
 
     if (actionMenuItem === MENU_ITEMS.DOWNLOAD) {
       const URL = canvas.toDataURL();
@@ -44,27 +50,41 @@ const Board = () => {
         historyPointer.current += 1;
       }
       const imageData = drawHistory.current[historyPointer.current];
-      if (context) {
-        context.putImageData(imageData, 0, 0);
-      }
+
+      context?.putImageData(imageData, 0, 0);
     }
     dispatch(actionItemClick(null));
   }, [actionMenuItem]);
 
   useEffect(() => {
-    console.log(typeof size);
     if (!canvaseRef.current) return;
     const canvas = canvaseRef.current;
     const context = canvas.getContext("2d");
 
     if (!context) return; // Check if context is truthy
 
-    const changeConfig = () => {
-      context.lineWidth = Number(size);
-      context.strokeStyle = String(color);
+    const changeConfig = (args: chageConfigs) => {
+      const { color, size } = args;
+
+      if (color !== undefined) {
+        context.strokeStyle = String(color);
+      }
+      if (size !== undefined) {
+        context.lineWidth = Number(size);
+      }
     };
 
-    changeConfig();
+    const handleChangeConfig = (args: chageConfigs) => {
+      // changeConfig({ color, size });
+      changeConfig(args);
+    };
+    // changeConfig(color ?? "defaultColor", size ?? 3);
+    changeConfig({ color, size });
+
+    socket.on("changeConfig", handleChangeConfig);
+    return () => {
+      socket.off("changeConfig", handleChangeConfig);
+    };
   }, [color, size]);
 
   useLayoutEffect(() => {
@@ -89,11 +109,13 @@ const Board = () => {
     const handleMouseDown = (e: MouseEvent) => {
       shouldDraw.current = true;
       beginPath(e.clientX, e.clientY);
+      socket.emit("beginPath", { x: e.clientX, y: e.clientY });
     };
 
     const handleMouseMove = (e: MouseEvent) => {
       if (!shouldDraw.current || !context) return;
       drawLine(e.clientX, e.clientY);
+      socket.emit("drawLine", { x: e.clientX, y: e.clientY });
     };
 
     const handleMouseUp = () => {
@@ -110,16 +132,26 @@ const Board = () => {
       }
     };
 
+    const handleBeginPath = (path: MouseEvent) => {
+      beginPath(path.x, path.y);
+    };
+    const handleDrawLine = (path: MouseEvent) => {
+      drawLine(path.x, path.y);
+    };
     canvas.addEventListener("mousedown", handleMouseDown);
     canvas.addEventListener("mousemove", handleMouseMove);
     canvas.addEventListener("mouseup", handleMouseUp);
+    socket.on("beginPath", handleBeginPath);
+    socket.on("drawLine", handleDrawLine);
     return () => {
       canvas.removeEventListener("mousedown", handleMouseDown);
       canvas.removeEventListener("mousemove", handleMouseMove);
       canvas.removeEventListener("mouseup", handleMouseUp);
+      socket.off("beginPath", handleBeginPath);
+      socket.off("drawLine", handleDrawLine);
     };
   }, []);
-  console.log(color, size);
+
   return <canvas ref={canvaseRef}></canvas>;
 };
 
